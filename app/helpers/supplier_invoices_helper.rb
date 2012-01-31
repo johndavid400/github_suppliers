@@ -1,0 +1,2 @@
+module SupplierInvoicesHelper
+end
