@@ -1,4 +1,4 @@
 %h1 Suppliers Index
 %ul
   - @suppliers.each do |supplier|
-    %li= supplier.name
+    %li= link_to supplier.name, supplier_path(supplier)
