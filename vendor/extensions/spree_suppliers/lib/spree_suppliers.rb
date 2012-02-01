@@ -5,7 +5,6 @@ module SpreeSuppliers
   class Engine < Rails::Engine
     config.autoload_paths += %W(#{config.root}/lib)
     def self.activate
-      Ability.register_ability(AbilityDecorator)
 
       LineItem.class_eval do
         has_many :invoice_items
@@ -57,6 +56,10 @@ module SpreeSuppliers
             :user_id        => (User.respond_to?(:current) && User.current.try(:id)) || self.user_id
           })
         end
+      end
+
+      Product.class_eval do
+        belongs_to :supplier
       end
 
       Taxon.class_eval do

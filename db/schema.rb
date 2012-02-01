@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120131161610) do
+ActiveRecord::Schema.define(:version => 20120201170705) do
 
   create_table "activators", :force => true do |t|
     t.string   "description"
@@ -327,6 +327,7 @@ ActiveRecord::Schema.define(:version => 20120131161610) do
     t.string   "meta_description"
     t.string   "meta_keywords"
     t.integer  "count_on_hand",        :default => 0,  :null => false
+    t.integer  "supplier_id"
   end
 
   add_index "products", ["available_on"], :name => "index_products_on_available_on"
@@ -493,6 +494,14 @@ ActiveRecord::Schema.define(:version => 20120131161610) do
     t.text     "description"
     t.integer  "user_id"
   end
+
+  create_table "suppliers_taxons", :id => false, :force => true do |t|
+    t.integer "supplier_id"
+    t.integer "taxon_id"
+  end
+
+  add_index "suppliers_taxons", ["supplier_id"], :name => "index_suppliers_taxons_on_supplier_id"
+  add_index "suppliers_taxons", ["taxon_id"], :name => "index_suppliers_taxons_on_taxon_id"
 
   create_table "tax_categories", :force => true do |t|
     t.string   "name"
