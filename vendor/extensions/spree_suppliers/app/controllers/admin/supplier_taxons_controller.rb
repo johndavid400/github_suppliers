@@ -15,7 +15,6 @@ class Admin::SupplierTaxonsController < Admin::BaseController
     @supplier = load_supplier
     @taxons = params[:q].blank? ? [] : Taxon.where('lower(name) LIKE ?', "%#{params[:q].mb_chars.downcase}%")
     @taxons.delete_if { |taxon| @supplier.taxons.include?(taxon) }
-
     respond_with(:admin, @taxons)
   end
 
@@ -25,7 +24,6 @@ class Admin::SupplierTaxonsController < Admin::BaseController
     @supplier.taxons.delete(@taxon)
     @supplier.save
     @taxons = @supplier.taxons
-
     respond_with(@taxon) { |format| format.js { render_js_for_destroy } }
   end
 
@@ -35,7 +33,6 @@ class Admin::SupplierTaxonsController < Admin::BaseController
     @supplier.taxons << @taxon
     @supplier.save
     @taxons = @supplier.taxons
-
     respond_with(:admin, @taxons)
   end
 
@@ -50,10 +47,9 @@ class Admin::SupplierTaxonsController < Admin::BaseController
   def update_taxons
     @supplier = Supplier.find params[:supplier_id]
     @supplier.taxons = []
-    Taxon.all.map {|m| @supplier.taxons.push(Taxon.find_by_id(params[m.name])) if params.member?(m.name) }
-    @supplier.taxons.push(Taxon.find_by_name("vendors"))
+    @supplier.taxons.push(Taxon.all.select{|t| params[t.name.to_s] })
     @supplier.save
-    redirect_to(:back)
+    redirect_to :back, :notice => "Taxons successfully added"
   end
 
   private
