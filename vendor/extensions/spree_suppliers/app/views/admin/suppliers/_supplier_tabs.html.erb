@@ -7,9 +7,6 @@
       <li<%== ' class="active"' if current == "Taxons" %>>
         <%= link_to t("taxons"), selected_admin_supplier_taxons_url(@supplier) %>
       </li>
-      <li<%== ' class="active"' if current == "Shipping" %>>
-        <%= link_to "Shipping Options", edit_admin_supplier_url(@supplier) %>
-      </li>
     <% end %>
   </ul>
 <% end %>
