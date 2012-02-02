@@ -12,6 +12,7 @@ class Admin::SuppliersController < Admin::BaseController
 
   def new
     @supplier = Supplier.new()
+    @supplier.images.build
     @status = true
   end
 
@@ -26,6 +27,11 @@ class Admin::SuppliersController < Admin::BaseController
 
   def show
     @supplier = Supplier.find(params[:id])
+  end
+
+  def edit
+    @supplier = Supplier.find(params[:id])
+    @supplier.images.build
   end
 
   def destroy

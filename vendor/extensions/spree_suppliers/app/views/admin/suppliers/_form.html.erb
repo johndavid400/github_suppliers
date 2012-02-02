@@ -45,4 +45,17 @@
   </tr>
 </table>
 
+<%= f.fields_for :images do |image| %>
+  <%= image.label :image %>
+  <%= image.file_field :attachment %>
+  <p />
+<% end %>
+
+<p />
+
+<% if @supplier.images.present? %>
+  <% @supplier.images.each do |image| %>
+    <%= image_tag(image.attachment) %>
+  <% end %>
+<% end %>
 
