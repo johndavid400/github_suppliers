@@ -17,6 +17,8 @@ module SpreeSuppliers
       Admin::OrdersController.class_eval do
         def show
           load_order
+          # optional fee that admin can charge to sell suppliers products for them
+          @fee = 0.10
           if current_user.has_role?("vendor")
             @invoices = @order.supplier_invoices
             @invoices.select! {|s| s.supplier_id == current_user.supplier.id}
@@ -31,21 +33,24 @@ module SpreeSuppliers
           params[:search][:completed_at_is_not_null] ||= '1' if Spree::Config[:show_only_complete_orders_by_default]
           @show_only_completed = params[:search][:completed_at_is_not_null].present?
           params[:search][:meta_sort] ||= @show_only_completed ? 'completed_at.desc' : 'created_at.desc'
+
           @search = Order.metasearch(params[:search])
+
           if !params[:search][:created_at_greater_than].blank?
             params[:search][:created_at_greater_than] = Time.zone.parse(params[:search][:created_at_greater_than]).beginning_of_day rescue ""
           end
+
           if !params[:search][:created_at_less_than].blank?
             params[:search][:created_at_less_than] = Time.zone.parse(params[:search][:created_at_less_than]).end_of_day rescue ""
           end
+
           if @show_only_completed
             params[:search][:completed_at_greater_than] = params[:search].delete(:created_at_greater_than)
             params[:search][:completed_at_less_than] = params[:search].delete(:created_at_less_than)
           end
-          @orders = Order.metasearch(params[:search]).paginate(
-            :include => [:user, :shipments, :payments],
-            :per_page => Spree::Config[:orders_per_page],
-            :page => params[:page])
+
+          @orders = Order.metasearch(params[:search]).includes([:user, :shipments, :payments]).page(params[:page]).per(Spree::Config[:orders_per_page])
+
           if current_user.has_role?("vendor")
             @orders.select! {|o| o.supplier_invoices.select {|s| s.supplier_id == current_user.supplier.id}.size > 0}
           end
@@ -67,11 +72,11 @@ module SpreeSuppliers
             invoice = SupplierInvoice.create(:order_id => @order.id, :supplier_id => @suppliers[i], :item_count => @product_count)
 
             @supplier_products.each do |item|
-              invoice.items.create(:product_id => item.product.id, :quantity => item.quantity, :line_item_id => item.id)
+              invoice.invoice_items.create(:product_id => item.product.id, :quantity => item.quantity, :line_item_id => item.id)
             end
 
             item_total = "0.00".to_d
-            invoice.items.each do |i|
+            invoice.invoice_items.each do |i|
               item_total = (i.line_item.variant.price * i.quantity) + item_total
             end
             invoice.update_attributes(:invoice_total => item_total)
@@ -79,23 +84,25 @@ module SpreeSuppliers
             #SupplierMailer.invoice_email(@invoice).deliver
           end
         end
+
         def finalize!
           update_attribute(:completed_at, Time.now)
-          self.out_of_stock_items = InventoryUnit.assign_opening_inventory(self)
+          InventoryUnit.assign_opening_inventory(self)
           # lock any optional adjustments (coupon promotions, etc.)
-          adjustments.optional.each { |adjustment| adjustment.update_attribute("locked", true) }
+          adjustments.optional.each { |adjustment| adjustment.update_attribute('locked', true) }
           # generate the invoices for each supplier
           generate_invoices(self)
           #OrderMailer.confirm_email(self).deliver
 
           self.state_events.create({
-            :previous_state => "cart",
-            :next_state     => "complete",
-            :name           => "order" ,
-            :user_id        => (User.respond_to?(:current) && User.current.try(:id)) || self.user_id
+            :previous_state => 'cart',
+            :next_state => 'complete',
+            :name => 'order' ,
+            :user_id => (User.respond_to?(:current) && User.current.try(:id)) || self.user_id
           })
         end
       end
+
 
       Admin::ProductsController.class_eval do
         before_filter :load
