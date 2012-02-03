@@ -45,17 +45,16 @@
   </tr>
 </table>
 
-<%= f.fields_for :images do |image| %>
-  <%= image.label :image %>
-  <%= image.file_field :attachment %>
-  <p />
-<% end %>
-
-<p />
-
-<% if @supplier.images.present? %>
-  <% @supplier.images.each do |image| %>
-    <%= image_tag(image.attachment) %>
+  <h3>Supplier Images</h3>
+  <%= f.fields_for :images do |image| %>
+    <% if !image.object.attachment_file_name.nil? %>
+      <span class="supplier_image">
+        <%= image_tag(image.object.attachment.url) %>
+      </span>
+    <% else %>
+        <p />
+        <h4><%= "Upload New Image" %></h4>
+        <%= image.file_field :attachment if image.object.attachment_file_name.nil? %>
+    <% end %>
   <% end %>
-<% end %>
 
